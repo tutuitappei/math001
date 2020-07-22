@@ -77,11 +77,10 @@ bool IsHit(const Capsule& cap, const Circle& cc) {
 	//⑥⑤の結果を②の結果にかけます
 	v = v * Clamp(num);
 	//⑦①のベクトルから②のベクトルを引きます
-	vp = vp - v;
 	//⑧⑦のベクトルの大きさを測ります
-
+	auto anser = (vp - v)*(vp - v);
 	//⑨⑧の値と、cap.radius+cc.radiusの値を比較します。
-	return false;
+	return (anser < (cap.radius + cc.radius));
 	
 }
 
