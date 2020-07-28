@@ -43,6 +43,8 @@ Matrix RotatePosition(const Position2& center, float angle) {
 ///なお、カプセルには端点Aと端点Bがあるが、どちらの点もcenterを中心に回転してください。
 ///前回のRotateMatrixの実装は済んでいるため、すぐにできると思います。
 Capsule RotateCapsule(Position2 center, float angle, const Capsule &cap) {
+	cap.posA = MultipleMat();
+	cap.posB = MultipleMat();
 	Capsule ret = cap;
 	return ret;
 }
@@ -72,13 +74,13 @@ bool IsHit(const Capsule& cap, const Circle& cc) {
 	//③①と②の内積を求めます。
 	auto num = Dot(vp, v);
 	//④③の結果を②の大きさの2乗で割ります
-	num = num / (v * v);
+	num = num / v.SQMagnitude();
 	//⑤④の結果をクランプします
 	//⑥⑤の結果を②の結果にかけます
 	v = v * Clamp(num);
 	//⑦①のベクトルから②のベクトルを引きます
 	//⑧⑦のベクトルの大きさを測ります
-	auto anser = (vp - v)*(vp - v);
+	auto anser = (vp - v).Magnitude();
 	//⑨⑧の値と、cap.radius+cc.radiusの値を比較します。
 	return (anser < (cap.radius + cc.radius));
 	
