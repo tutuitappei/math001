@@ -31,7 +31,10 @@ Matrix RotatePosition(const Position2& center, float angle) {
 	//②原点中心に回転して
 	//③中心を元の座標へ戻す
 
-	Matrix mat = IdentityMat();
+	Position2 pos = center;
+
+	Matrix mat = MultipleMat(
+	TranslateMat(center.x, center.y), MultipleMat(RotateMat(angle),TranslateMat(-center.x, -center.y)));
 	return mat;
 	//これを書き換えて、特定の点を中心に回転を行うようにしてください。
 }
@@ -79,9 +82,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	auto cascadeH = LoadGraph("img/cascade_chip.png");
 	auto chipH = LoadGraph("img/atlas0.png");
 	auto RockH = LoadGraph("img/rock.png");
+	auto ClearH = LoadGraph("img/clear.png");
+
 	Circle rock = { 15,{256,0} };
 
 	Capsule cap(20,Position2((sw-wdW)/2,sh-100),Position2((sw - wdW) / 2+wdW,sh-100));
+
+	Position2 motoA = cap.posA;
+	Position2 motoB = cap.posB;
 
 	char keystate[256];
 	
@@ -89,6 +97,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int frame = 0;
 	bool isLeft = false;
+	bool bakuhaFlag = false;
+	bool clearFrag = false;
 	while (ProcessMessage() == 0) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(keystate);
@@ -96,40 +106,45 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawBox(0, 0, sw, sh, 0xaaffff, true);
 
 		int mx = 0, my = 0;
+		if (clearFrag == false)
+		{
+			if (keystate[KEY_INPUT_LEFT]) {
+				isLeft = true;
+			}
+			else if (keystate[KEY_INPUT_RIGHT]) {
+				isLeft = false;
+			}
 
-		if (keystate[KEY_INPUT_LEFT]) {
-			isLeft = true;
-		}
-		else if (keystate[KEY_INPUT_RIGHT]) {
-			isLeft = false;
-		}
+			if (isLeft) {
+				mx = cap.posA.x;
+				my = cap.posA.y;
+			}
+			else {
+				mx = cap.posB.x;
+				my = cap.posB.y;
+			}
 
-		if (isLeft) {
-			mx = cap.posA.x;
-			my = cap.posA.y;
-		}
-		else {
-			mx = cap.posB.x;
-			my = cap.posB.y;
-		}
 
-		if (keystate[KEY_INPUT_Z]) {
+			if (keystate[KEY_INPUT_Z]) {
+				angle = -0.05f;
+			}
+			else if (keystate[KEY_INPUT_X]) {
+				angle = 0.05f;
+			}
+			else {
+				angle = 0.0f;
+			}
 
-			angle = -0.05f;
+
+			//当たり判定を完成させて当たったときの反応を書いてください
+			if (IsHit(cap, rock)) {
+				bakuhaFlag = true;
+			}
+			else
+			{
+				bakuhaFlag = false;
+			}
 		}
-		else if (keystate[KEY_INPUT_X]) {
-
-			angle = 0.05f;
-		}
-		else {
-			angle = 0.0f;
-		}
-
-		//当たり判定を完成させて当たったときの反応を書いてください
-		if(IsHit(cap,rock)){
-
-		}
-
 		//カプセル回転
 		Matrix rotMat=RotatePosition(Position2(mx, my), angle);
 		cap.posA = MultipleVec(rotMat, cap.posA);
@@ -166,9 +181,36 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 		DrawWood(cap, woodH);
-		DrawCircle(mx, my, 30, 0xff0000, false, 3);
+		if (!clearFrag)
+		{
+			DrawCircle(mx, my, 30, 0xff0000, false, 3);
+		}
+		if ((rock.pos.y > sh)||bakuhaFlag == true)
+		{
+			rock.pos.y = -100;
+			rock.pos.x = rand() % (48 * 9) + 30;
+		}
+		if (!clearFrag)
+		{
+			rock.pos.y++;
+		}
+		DrawGraph(rock.pos.x, rock.pos.y, RockH, true);
+		if (cap.posA.y < 30 && cap.posB.y < 30)
+		{
+			DrawGraph(0, 0, ClearH, true);
+			angle = 0.0f;
+			clearFrag = true;
+		}
+		if (!clearFrag)
+		{
 		++frame;
-		
+
+		}
+		if (bakuhaFlag)
+		{
+			cap.posA = motoA;
+			cap.posB = motoB;
+		}
 		ScreenFlip();
 	}
 
