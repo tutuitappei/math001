@@ -99,6 +99,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	bool isLeft = false;
 	bool bakuhaFlag = false;
 	bool clearFrag = false;
+	bool doropFrag = false;
+
 	while (ProcessMessage() == 0) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(keystate);
@@ -124,18 +126,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				my = cap.posB.y;
 			}
 
-
-			if (keystate[KEY_INPUT_Z]) {
-				angle = -0.05f;
+			if ((!doropFrag)&&(max(cap.posA.x, cap.posB.x) - min(cap.posA.x, cap.posB.x) >= 100))
+			{
+				if (keystate[KEY_INPUT_Z]) {
+					angle = -0.05f;
+				}
+				else if (keystate[KEY_INPUT_X]) {
+					angle = 0.05f;
+				}
+				else {
+					angle = 0.0f;
+				}
 			}
-			else if (keystate[KEY_INPUT_X]) {
-				angle = 0.05f;
+			else
+			{
+				if (cap.posA.y >= cap.posB.y)
+				{
+					mx = cap.posA.x;
+					my = cap.posA.y;
+				}
+				else
+				{
+					mx = cap.posB.x;
+					my = cap.posB.y;
+				}
+				doropFrag = true;
 			}
-			else {
-				angle = 0.0f;
-			}
-
-
 			//“–‚½‚è”»’è‚ðŠ®¬‚³‚¹‚Ä“–‚½‚Á‚½‚Æ‚«‚Ì”½‰ž‚ð‘‚¢‚Ä‚­‚¾‚³‚¢
 			if (IsHit(cap, rock)) {
 				bakuhaFlag = true;
@@ -181,7 +197,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 		DrawWood(cap, woodH);
-		if (!clearFrag)
+		if (!clearFrag && !doropFrag)
 		{
 			DrawCircle(mx, my, 30, 0xff0000, false, 3);
 		}
@@ -206,10 +222,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		++frame;
 
 		}
-		if (bakuhaFlag)
+		if ((bakuhaFlag) || ((cap.posB.y > sh + 50) && (cap.posA.y > sh + 50)) ||((cap.posA.x < -10&& cap.posB.x < -10)||(cap.posA.x > sw&& cap.posB.x > sw)))
 		{
 			cap.posA = motoA;
 			cap.posB = motoB;
+			doropFrag = false;
 		}
 		ScreenFlip();
 	}
